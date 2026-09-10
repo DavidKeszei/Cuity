@@ -80,7 +80,7 @@ public sealed class Switch<TEntity, TData>: Island, ICopyable<BuildContext> wher
                     }
 
                     float width = indicator.Get<Scale>()!.Value.X;
-                    Get<Scale>()!.Value = new Vec2(x: width, y: 1);
+                    this.ClipRenderScale();
                 },
                 Content = Get<RebuildContent>()?.Content ?? null!
             }

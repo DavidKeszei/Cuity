@@ -42,7 +42,7 @@ internal sealed class InputSystem: IDynamicSystem {
 
     private (char Key, InputModifier Modifier, TimeSpan When, bool isPress) m_startInputInfo = ('\0', InputModifier.NONE, TimeSpan.Zero, false);
 
-    public InputSystem(ConsoleInfoSource provider) {
+    public InputSystem(PlatformConsoleInfo provider) {
 #if WIN_NT
         m_backend = (WindowsInputBackend)WindowsInputBackend.Init(source: provider.Windows);
 #endif

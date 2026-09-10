@@ -28,17 +28,10 @@ internal sealed partial class WindowsConsoleInfoProvider: IConsoleSource<Console
     [return: MarshalAs(unmanagedType: UnmanagedType.Bool)]
     private static partial bool Read(nint handle, ref WindowsConsoleEventMsg message, uint count, out uint _);
 
-    [LibraryImport(libraryName: "kernel32.dll", EntryPoint = "PeekConsoleInputW")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    [return: MarshalAs(unmanagedType: UnmanagedType.Bool)]
-    private static partial bool Peek(nint handle, ref WindowsConsoleEventMsg message, uint count, out uint _);
-
     #endregion
 
     private readonly Queue<InputKeyEventInfo> m_inputs = null!;
     private readonly Queue<ConsoleScaleInfo> m_layouts = null!;
-
-    private readonly WindowsConsoleMsgTag[] m_tags = null!;
 
     private bool m_isLocked = false;
 
@@ -46,7 +39,6 @@ internal sealed partial class WindowsConsoleInfoProvider: IConsoleSource<Console
         m_inputs  = new Queue<InputKeyEventInfo>(capacity: QUEUE_COUNT);
         m_layouts = new Queue<ConsoleScaleInfo>(capacity: QUEUE_COUNT);
 
-        m_tags = Enum.GetValues<WindowsConsoleMsgTag>();
         _ = Task.Run(async() => await Watch());
     }
 
@@ -80,9 +72,7 @@ internal sealed partial class WindowsConsoleInfoProvider: IConsoleSource<Console
         WindowsConsoleEventMsg message = default!;
 
         while (true) {
-            bool success = Peek(handle: StdHandle.Input, ref message, count: READ_COUNT, out uint _) && CheckIfSupported(tag: message.Tag);
-
-            if (success && Read(handle: StdHandle.Input, ref message, count: READ_COUNT, out _)) {
+            if (Read(handle: StdHandle.Input, ref message, count: READ_COUNT, out _)) {
                 while (Interlocked.CompareExchange<bool>(ref m_isLocked, true, false) != false)
                     await Task.Delay(millisecondsDelay: WAIT);
 
@@ -94,22 +84,14 @@ internal sealed partial class WindowsConsoleInfoProvider: IConsoleSource<Console
                     case WindowsConsoleMsgTag.LAYOUT:
                         m_layouts.Enqueue(message.ConsoleWindowScale);
                         break;
+
+                    default:
+                        break;
                 }
 
                 Interlocked.Exchange<bool>(ref m_isLocked, false);
                 continue;
             }
-
-            /* Reads out the unsupported messages */
-            _ = Read(handle: StdHandle.Input, ref message, count: READ_COUNT, out _);
         }
-    }
-
-    private bool CheckIfSupported(WindowsConsoleMsgTag tag) {
-        for (int i = 0; i < m_tags.Length; ++i)
-            if (m_tags[i] == tag)
-                return true;
-
-        return false;
     }
 }

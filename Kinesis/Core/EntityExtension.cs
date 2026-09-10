@@ -70,8 +70,8 @@ public static class EntityExtension {
             Vec2 limitedScaleWithInset = parentPosition - currentPositon;
             Vec2 inset = Vec2.Zero;
 
-            if (allParent.X < allCurrent.X) inset.X = limitedScaleWithInset.X;
-            if (allParent.Y < allCurrent.Y) inset.Y = limitedScaleWithInset.Y;
+            if (allParent.X < allCurrent.X) inset.X = allCurrent.X - allParent.X;
+            if (allParent.Y < allCurrent.Y) inset.Y = allCurrent.Y - allParent.Y;
 
             scale.Inset = inset;
         }

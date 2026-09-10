@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Kinesis.Core;
 
-internal record struct LayoutInfo(Vec2 Scale, bool IsChanged);
+internal record LayoutInfo(Vec2 Scale, bool IsChanged);
 
 /// <summary>
 /// This class observes changes in the current console windows dimension.
@@ -24,9 +24,9 @@ internal partial class LayoutSystem: IDynamicSystem {
     private readonly State<LayoutInfo> m_info = null!;
 
 #if WIN_NT
-    private readonly WindowsConsoleInfoProvider m_source = null!;
+    private readonly ConsoleReader<WindowsConsoleInfoProvider, ConsoleScaleInfo> m_source = default!;
 #elif LINUX
-    private readonly LinuxConsoleInfoProvider m_source   = null!;
+    private readonly ConsoleReader<LinuxConsoleInfoProvider, ConsoleScaleInfo>   m_source = default!;
 #endif
 
     /// <summary>
@@ -38,13 +38,13 @@ internal partial class LayoutSystem: IDynamicSystem {
     /// Create a new <see cref="LayoutSystem"/> with <paramref name="scale"/>.
     /// </summary>
     /// <param name="scale">Start scale of the application. This is going be the pivot point of the observing.</param>
-    public LayoutSystem(ConsoleInfoSource provider, State<LayoutInfo> state, Vec2 scale) {
+    public LayoutSystem(PlatformConsoleInfo provider, State<LayoutInfo> state, Vec2 scale) {
         m_info = state;
 
 #if WIN_NT
-        m_source = provider.Windows;
+        m_source = new ConsoleReader<WindowsConsoleInfoProvider, ConsoleScaleInfo>(provider.Windows);
 #elif LINUX
-        m_source = provider.Linux;
+        m_source = new ConsoleReader<LinuxConsoleInfoProvider, ConsoleScaleInfo>(provider.Linux);
 #endif
 
         m_info.Value = new LayoutInfo(scale, IsChanged: true);
@@ -54,12 +54,6 @@ internal partial class LayoutSystem: IDynamicSystem {
     /// Start watching of changes of the console window.
     /// </summary>
     public void Run() {
-#if WIN_NT
-        RunOnWindows();
-#endif
-    }
-
-    private void RunOnWindows() {
         bool isFirst = true;
         ConsoleScaleInfo info = default;
 
@@ -72,9 +66,9 @@ internal partial class LayoutSystem: IDynamicSystem {
             Thread.Sleep(millisecondsTimeout: POOLING_TIME);
 
             if (!info.Equals(default)) {
-                if (!isFirst) {
+
+                if (!isFirst)
                     m_info.Value = new LayoutInfo(new Vec2(x: info.X, y: info.Y), IsChanged: true);
-                }
 
                 isFirst = false;
                 info = default;

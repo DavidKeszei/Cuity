@@ -16,7 +16,7 @@ internal sealed class Renderer {
     #region PREDEFINES
 
     private const int STRING_BUILDER_STACK_SPACE = 16_384;
-    private const float FRAME_TIME_LIMIT         = 8f;
+    private const float FRAME_TIME_LIMIT         = 16f;
     private const float FPS_CONVERT              = 1000f;
     private const float NS_TO_MS                 = 1000f;
 

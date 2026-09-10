@@ -27,7 +27,7 @@ public sealed class KinesisEngine: ISystemProvider {
     private readonly State<LayoutInfo> m_layoutInfo = null!;
     private readonly State<WorkerSystemState> m_workSyncState = null!;
 
-    private readonly ConsoleInfoSource m_consoleSourceInfoProvider = default!;
+    private readonly PlatformConsoleInfo m_consoleSourceInfoProvider = default!;
     private readonly string m_title = string.Empty;
 
     /// <summary>
@@ -40,9 +40,9 @@ public sealed class KinesisEngine: ISystemProvider {
         Console.Out.Write(value: AnsiCommand.WrapDisable);
 
         m_title = m_title == null ? $"\e]0;Untitled\a" : $"\e]0;{title}\a";
-        m_consoleSourceInfoProvider = new ConsoleInfoSource();
+        m_consoleSourceInfoProvider = new PlatformConsoleInfo();
 
-        m_layoutInfo = new ValueState<LayoutInfo>();
+        m_layoutInfo = new RefState<LayoutInfo>();
         m_workSyncState = new ValueState<WorkerSystemState>(@default: WorkerSystemState.WAIT_FOR_RENDERER);
 
         m_input = new InputSystem(provider: m_consoleSourceInfoProvider);

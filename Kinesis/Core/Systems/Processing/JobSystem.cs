@@ -134,10 +134,14 @@ internal sealed class JobSystem: IDynamicSystem {
         if (!messages.Read(out T message)) return;
 
         for(int i = 0; i < m_targets.Count; ++i) {
-            if (!m_targets[i].Island.IsActive || m_targets[i].Status != JobRequestIntent.ACTIVE || (m_targets[i].IsFocusBased && m_focusTargetIndexes[m_focusIndex] != i))
+
+            if (!m_targets[i].Island.IsActive ||
+                 m_targets[i].Status != JobRequestIntent.ACTIVE ||
+                (m_targets[i].IsFocusBased && m_focusTargetIndexes[m_focusIndex] != i))
                 continue;
 
             Delegate _ref = m_targets[i].Action;
+
             if (m_targets[i].Tag == T.Target)
                 Unsafe.As<Delegate, Action<T>>(ref _ref)(message);
         }
@@ -149,25 +153,14 @@ internal sealed class JobSystem: IDynamicSystem {
                 JobTarget target = m_targets[i];
 
                 if (m_targets[^1].IsFocusBased) {
-                    for (int j = 0; j < m_focusTargetIndexes.Count; ++j) {
+                    if (IsFocused(target, i) && m_focusIndex - 1 >= 0)
+                        --m_focusIndex;
 
-                        if (m_focusTargetIndexes[j] == m_targets.Count - 1) {
-                            m_focusTargetIndexes[j] = i;
-                            break;
-                        }
-                    }
+                    m_focusTargetIndexes.RemoveAt(m_focusTargetIndexes.Count - 1);
                 }
 
                 (m_targets[i], m_targets[^1]) = (m_targets[^1], m_targets[i]);
                 m_targets.RemoveAt(m_targets.Count - 1);
-
-                /* If the target focused, the clear the focus slot */
-                if (target.IsFocusBased) {
-                    if (m_focusTargetIndexes[m_focusIndex] == i && m_focusIndex - 1 >= 0)
-                        --m_focusIndex;
-
-                    m_focusTargetIndexes.Remove(i);
-                }
             }
     }
 
@@ -191,6 +184,10 @@ internal sealed class JobSystem: IDynamicSystem {
 
         return false;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsFocused(JobTarget target, int index) 
+        => target.IsFocusBased && m_focusTargetIndexes[m_focusIndex] == index;
 }
 
 /// <summary>

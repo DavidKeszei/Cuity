@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
-using System.Text;
 
 namespace Kinesis.Native;
 
@@ -41,14 +39,14 @@ internal sealed partial class WindowsInputBackend: IInputBackend {
     #endregion
 
     private readonly RingBuffer<InputInfo> m_infoBuffer = null!;
-    private WindowsConsoleInfoProvider m_source = null!;
+    private readonly ConsoleReader<WindowsConsoleInfoProvider, InputKeyEventInfo> m_source = default!;
 
     private InputInfo m_info = default;
     private bool m_isPressedLastTime = false;
 
     private WindowsInputBackend(WindowsConsoleInfoProvider source) {
         m_infoBuffer = new RingBuffer<InputInfo>(capacity: 64);
-        m_source = source;
+        m_source = new ConsoleReader<WindowsConsoleInfoProvider, InputKeyEventInfo>(source);
     }
 
     /// <summary>
@@ -67,7 +65,6 @@ internal sealed partial class WindowsInputBackend: IInputBackend {
         if(!SetMode(handle: StdHandle.Input, flags))
             return IInputBackend.ERR;
 
-        backend.m_source = source;
         return backend;
     }
 
